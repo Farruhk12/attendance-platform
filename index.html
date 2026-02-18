@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Посещаемость сотрудников</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-brand">Посещаемость</div>
+      <nav class="sidebar-nav">
+        <a href="#journal" data-page="journal" class="active">Журнал</a>
+        <a href="#employees" data-page="employees">Сотрудники</a>
+        <a href="#analytics" data-page="analytics">Аналитика</a>
+      </nav>
+      <div class="sidebar-footer">Обновление каждые 30 сек</div>
+    </aside>
+
+    <nav class="bottom-nav" aria-label="Навигация">
+      <a href="#journal" data-page="journal" class="active">Журнал</a>
+      <a href="#employees" data-page="employees">Сотрудники</a>
+      <a href="#analytics" data-page="analytics">Аналитика</a>
+    </nav>
+
+    <div class="main-wrap">
+      <header class="header">
+        <div style="display:flex;align-items:baseline;gap:0.75rem;">
+          <h1 id="pageTitle">Журнал посещений</h1>
+          <span class="badge">автообновление 30 сек</span>
+        </div>
+        <div class="updated">Обновлено: <span id="lastUpdate">—</span></div>
+      </header>
+
+      <main class="content">
+        <div id="error" class="error-banner hidden"></div>
+
+        <div id="page-journal" class="page active">
+          <div class="card">
+            <div class="card-title">
+              Журнал посещений
+              <span class="journal-count" id="journalCount"></span>
+            </div>
+            <div class="filters">
+              <div class="filter-group">
+                <label>Дата от</label>
+                <input type="date" id="filterDateFrom" />
+              </div>
+              <div class="filter-group">
+                <label>Дата до</label>
+                <input type="date" id="filterDateTo" />
+              </div>
+              <div class="filter-group wide">
+                <label>Имя</label>
+                <input type="text" id="filterName" placeholder="Поиск по имени" />
+              </div>
+              <div class="filter-group">
+                <label>Должность</label>
+                <select id="filterPosition"><option value="">Все</option></select>
+              </div>
+              <div class="filter-group">
+                <label>Подразделение</label>
+                <select id="filterDepartment"><option value="">Все</option></select>
+              </div>
+              <button type="button" class="btn-reset" id="btnResetFilters">Сбросить</button>
+            </div>
+            <div class="journal-body">
+              <div class="journal-table-wrap">
+                <table class="journal-table">
+                  <thead>
+                    <tr>
+                      <th class="cell-photo"></th>
+                      <th>Сотрудник</th>
+                      <th>Время</th>
+                      <th>Действие</th>
+                      <th>Устройство</th>
+                    </tr>
+                  </thead>
+                  <tbody id="journalBody"><tr><td colspan="5" class="empty-state">Загрузка…</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="page-employees" class="page">
+          <div class="card">
+            <div class="card-title">Список сотрудников</div>
+            <div class="card-body" id="employeesList"><div class="empty-state">Загрузка…</div></div>
+          </div>
+        </div>
+
+        <div id="page-analytics" class="page">
+          <div id="analyticsContent"><div class="empty-state">Загрузка…</div></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/views/journal.js"></script>
+  <script src="js/views/employees.js"></script>
+  <script src="js/views/analytics.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
