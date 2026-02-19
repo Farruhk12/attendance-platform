@@ -75,33 +75,98 @@ window.JournalView = (function () {
     if (!els.body) return;
     var allEmployees = Data.getEmployees();
     var visits = applyFilters();
-    if (els.count) els.count.textContent = '(' + visits.length + ')';
+    
+    // Группируем по сотруднику и дате
+    var grouped = {};
+    visits.forEach(function (v) {
+      var empId = String(v.employeeId || '').trim();
+      var visitDate = Utils.getVisitDate(v);
+      if (!visitDate) return;
+      var key = empId + '|' + visitDate;
+      if (!grouped[key]) {
+        var emp = Utils.getEmployeeById(allEmployees, v.employeeId);
+        grouped[key] = {
+          employeeId: empId,
+          name: v.name || (emp && emp.name) || '—',
+          date: visitDate,
+          department: emp && emp.department || '',
+          position: emp && emp.position || '',
+          photoUrl: Utils.getPhotoUrl(allEmployees, v.employeeId),
+          arrival: null,
+          departure: null,
+          device: v.device || '—'
+        };
+      }
+      var isArrival = String(v.action || '').toLowerCase().indexOf('приход') !== -1;
+      var ts = (typeof v.ts === 'number' && v.ts > 0) ? v.ts : null;
+      if (ts && ts < 1e12) ts = ts * 1000;
+      var timeStr = Utils.formatTime(v);
+      if (isArrival) {
+        if (!grouped[key].arrival || (ts && (!grouped[key].arrivalTs || grouped[key].arrivalTs > ts))) {
+          grouped[key].arrival = timeStr;
+          grouped[key].arrivalTs = ts || 0;
+        }
+      } else {
+        if (!grouped[key].departure || (ts && (!grouped[key].departureTs || grouped[key].departureTs < ts))) {
+          grouped[key].departure = timeStr;
+          grouped[key].departureTs = ts || 0;
+        }
+      }
+      if (v.device) grouped[key].device = v.device;
+    });
+    
+    var rows = Object.keys(grouped).map(function (key) {
+      return grouped[key];
+    }).sort(function (a, b) {
+      if (a.date !== b.date) return b.date.localeCompare(a.date);
+      if (a.name !== b.name) return a.name.localeCompare(b.name);
+      return 0;
+    });
+    
+    if (els.count) els.count.textContent = '(' + rows.length + ')';
 
-    if (!visits.length) {
-      els.body.innerHTML = '<tr><td colspan="5" class="empty-state">Нет записей по выбранным фильтрам</td></tr>';
+    if (!rows.length) {
+      els.body.innerHTML = '<tr><td colspan="6" class="empty-state">Нет записей по выбранным фильтрам</td></tr>';
       return;
     }
-    els.body.innerHTML = visits.map(function (v) {
-      var photoUrl = Utils.getPhotoUrl(allEmployees, v.employeeId);
-      var img = photoUrl
-        ? '<img class="journal-photo" src="' + Utils.escapeHtml(photoUrl) + '" alt="" onerror="this.style.display=\'none\';var n=this.nextElementSibling;if(n)n.style.display=\'flex\'"><div class="journal-photo-placeholder" style="display:none">👤</div>'
+    
+    els.body.innerHTML = rows.map(function (row) {
+      var img = row.photoUrl
+        ? '<img class="journal-photo" src="' + Utils.escapeHtml(row.photoUrl) + '" alt="" onerror="this.style.display=\'none\';var n=this.nextElementSibling;if(n)n.style.display=\'flex\'"><div class="journal-photo-placeholder" style="display:none">👤</div>'
         : '<div class="journal-photo-placeholder">👤</div>';
-      var isIn = String(v.action || '').toLowerCase().indexOf('приход') !== -1;
-      var badgeClass = isIn ? 'in' : 'out';
-      var badgeText = v.action || '—';
-      var emp = Utils.getEmployeeById(allEmployees, v.employeeId);
-      var meta = [emp && emp.department, emp && emp.position].filter(Boolean).join(' · ');
+      var meta = [row.department, row.position].filter(Boolean).join(' · ');
+      var dateStr = row.date.split('-').reverse().join('.');
       return '<tr class="journal-row">' +
         '<td class="cell-photo" data-label="">' + img + '</td>' +
-        '<td data-label="Сотрудник"><div class="cell-name">' + Utils.escapeHtml(v.name || '—') + '</div>' + (meta ? '<div class="cell-meta">' + Utils.escapeHtml(meta) + '</div>' : '') + '</td>' +
-        '<td class="cell-time" data-label="Время">' + Utils.escapeHtml(Utils.formatTime(v)) + '</td>' +
-        '<td data-label="Действие"><span class="journal-badge ' + badgeClass + '">' + Utils.escapeHtml(badgeText) + '</span></td>' +
-        '<td class="cell-meta" data-label="Устройство">' + Utils.escapeHtml(v.device || '—') + '</td></tr>';
+        '<td data-label="Сотрудник"><div class="cell-name">' + Utils.escapeHtml(row.name) + '</div>' + (meta ? '<div class="cell-meta">' + Utils.escapeHtml(meta) + '</div>' : '') + '</td>' +
+        '<td data-label="Дата">' + Utils.escapeHtml(dateStr) + '</td>' +
+        '<td class="cell-time" data-label="Время прихода">' + (row.arrival ? '<span class="journal-badge in">' + Utils.escapeHtml(row.arrival) + '</span>' : '<span style="color:var(--text-muted)">—</span>') + '</td>' +
+        '<td class="cell-time" data-label="Время ухода">' + (row.departure ? '<span class="journal-badge out">' + Utils.escapeHtml(row.departure) + '</span>' : '<span style="color:var(--text-muted)">—</span>') + '</td>' +
+        '<td class="cell-meta" data-label="Устройство">' + Utils.escapeHtml(row.device) + '</td></tr>';
     }).join('');
+  }
+
+  function setTodayDate() {
+    var els = getFilterEls();
+    if (els.dateFrom && !els.dateFrom.value) {
+      var today = new Date();
+      var y = today.getFullYear();
+      var m = String(today.getMonth() + 1).padStart(2, '0');
+      var d = String(today.getDate()).padStart(2, '0');
+      els.dateFrom.value = y + '-' + m + '-' + d;
+    }
+    if (els.dateTo && !els.dateTo.value) {
+      var today = new Date();
+      var y = today.getFullYear();
+      var m = String(today.getMonth() + 1).padStart(2, '0');
+      var d = String(today.getDate()).padStart(2, '0');
+      els.dateTo.value = y + '-' + m + '-' + d;
+    }
   }
 
   function init() {
     fillFilterOptions();
+    setTodayDate();
     var els = getFilterEls();
     function onFilterChange() { render(); }
     if (els.dateFrom) els.dateFrom.addEventListener('change', onFilterChange);
@@ -116,6 +181,7 @@ window.JournalView = (function () {
         if (els.name) els.name.value = '';
         if (els.position) els.position.value = '';
         if (els.department) els.department.value = '';
+        setTodayDate();
         render();
       });
     }
