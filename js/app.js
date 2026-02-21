@@ -3,7 +3,7 @@
  */
 (function () {
   var pageTitles = {
-    journal: 'Журнал посещений',
+    journal: 'Журнал',
     employees: 'Сотрудники',
     analytics: 'Аналитика'
   };

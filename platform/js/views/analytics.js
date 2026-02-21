@@ -44,7 +44,7 @@ window.AnalyticsView = (function () {
 
     container.innerHTML =
       '<div class="analytics-cards">' +
-        '<div class="analytics-card"><div class="value">' + totalVisits + '</div><div class="label">Всего посещений</div></div>' +
+        '<div class="analytics-card"><div class="value">' + totalVisits + '</div><div class="label">Всего записей</div></div>' +
         '<div class="analytics-card"><div class="value">' + totalEmployees + '</div><div class="label">Сотрудников</div></div>' +
         '<div class="analytics-card"><div class="value">' + arrivals + '</div><div class="label">Приходов</div></div>' +
         '<div class="analytics-card"><div class="value">' + departures + '</div><div class="label">Уходов</div></div>' +
@@ -52,13 +52,13 @@ window.AnalyticsView = (function () {
       '<div class="analytics-section">' +
         '<h3>По подразделениям</h3>' +
         '<table class="analytics-table card">' +
-          '<thead><tr><th>Подразделение</th><th>Посещений</th></tr></thead><tbody>' + (deptRows || '<tr><td colspan="2" class="empty-state">Нет данных</td></tr>') + '</tbody>' +
+          '<thead><tr><th>Подразделение</th><th>Записей</th></tr></thead><tbody>' + (deptRows || '<tr><td colspan="2" class="empty-state">Нет данных</td></tr>') + '</tbody>' +
         '</table>' +
       '</div>' +
       '<div class="analytics-section">' +
         '<h3>По дням (последние 14)</h3>' +
         '<table class="analytics-table card">' +
-          '<thead><tr><th>Дата</th><th>Посещений</th></tr></thead><tbody>' + (dateRows || '<tr><td colspan="2" class="empty-state">Нет данных</td></tr>') + '</tbody>' +
+          '<thead><tr><th>Дата</th><th>Записей</th></tr></thead><tbody>' + (dateRows || '<tr><td colspan="2" class="empty-state">Нет данных</td></tr>') + '</tbody>' +
         '</table>' +
       '</div>';
   }

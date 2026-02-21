@@ -357,11 +357,26 @@ function readEmployeesForDisplay(sheet) {
   return list;
 }
 
+function formatTimeForDisplay(value) {
+  if (value == null || value === "") return "";
+  if (Object.prototype.toString.call(value) === "[object Date]") {
+    var d = value;
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    var h = String(d.getHours()).padStart(2, "0");
+    var min = String(d.getMinutes()).padStart(2, "0");
+    var s = String(d.getSeconds()).padStart(2, "0");
+    return y + "-" + m + "-" + day + " " + h + ":" + min + ":" + s;
+  }
+  return String(value).trim();
+}
+
 function readVisitsForDisplay(sheet) {
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
 
-  // теперь у нас 7 колонок минимум
+  // A=ID события, B=ID сотрудника, C=ФИО, D=Действие, E=Время, F=Timestamp (или пусто), G=Устройство
   var lastCol = Math.max(sheet.getLastColumn(), 7);
   var data = sheet.getRange(1, 1, lastRow, lastCol).getValues();
 
@@ -370,16 +385,22 @@ function readVisitsForDisplay(sheet) {
     var row = data[i];
     if (!row[1] && !row[2]) continue;
 
-    var iso = row[4] != null ? String(row[4]).trim() : "";
-    var ts = row[5] != null ? Number(row[5]) : 0;
+    var timeStr = formatTimeForDisplay(row[4]);
+    var rawTs = row[5];
+    var ts = 0;
+    if (rawTs != null && typeof rawTs === "number" && isFinite(rawTs)) {
+      if (rawTs > 0 && rawTs < 1e12) ts = rawTs * 1000;
+      else if (rawTs >= 1e12) ts = rawTs;
+    }
+    if (ts === 0 && timeStr) ts = toTs(timeStr);
 
     list.push({
       eventId: row[0] != null ? String(row[0]).trim() : "",
       employeeId: row[1] != null ? String(row[1]).trim() : "",
       name: row[2] != null ? String(row[2]).trim() : "",
       action: row[3] != null ? String(row[3]).trim() : "",
-      time: iso,
-      ts: isFinite(ts) ? ts : toTs(iso),
+      time: timeStr,
+      ts: ts,
       device: row[6] != null ? String(row[6]).trim() : ""
     });
   }

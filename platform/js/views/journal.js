@@ -1,5 +1,5 @@
 /**
- * Раздел «Журнал посещений»
+ * Раздел «Журнал»
  */
 window.JournalView = (function () {
   var Data = window.AttendanceData;

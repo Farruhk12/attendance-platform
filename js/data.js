@@ -2,7 +2,7 @@
  * Загрузка данных и общее состояние
  */
 window.AttendanceData = (function () {
-  var DATA_URL = 'https://script.google.com/macros/s/AKfycbwr2QA6HHqDZR3MT5wDjjfL8mPZp9BadITZWR7kEE82vUVTLPXyIVYqgh667076rnB0Mg/exec';
+  var DATA_URL = 'https://script.google.com/macros/s/AKfycbzPrAAnxeXsZS4XxOTIaJn2EoWFrxocNuRsetMacwPFMv6_yzPfPRqk54ItxdYxr721lg/exec';
   var POLL_MS = 30 * 1000;
   var allEmployees = [];
   var allVisits = [];

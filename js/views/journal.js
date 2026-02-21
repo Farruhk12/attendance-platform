@@ -1,5 +1,5 @@
 /**
- * Раздел «Журнал посещений»
+ * Раздел «Журнал»
  */
 window.JournalView = (function () {
   var Data = window.AttendanceData;
@@ -75,7 +75,7 @@ window.JournalView = (function () {
     if (!els.body) return;
     var allEmployees = Data.getEmployees();
     var visits = applyFilters();
-    
+
     // Группируем по сотруднику и дате
     var grouped = {};
     visits.forEach(function (v) {
@@ -93,28 +93,25 @@ window.JournalView = (function () {
           position: emp && emp.position || '',
           photoUrl: Utils.getPhotoUrl(allEmployees, v.employeeId),
           arrival: null,
-          departure: null,
-          device: v.device || '—'
+          departure: null
         };
       }
       var isArrival = String(v.action || '').toLowerCase().indexOf('приход') !== -1;
-      var ts = (typeof v.ts === 'number' && v.ts > 0) ? v.ts : null;
-      if (ts && ts < 1e12) ts = ts * 1000;
+      var ts = Utils.getTimestamp(v);
       var timeStr = Utils.formatTime(v);
       if (isArrival) {
-        if (!grouped[key].arrival || (ts && (!grouped[key].arrivalTs || grouped[key].arrivalTs > ts))) {
+        if (!grouped[key].arrival || (ts > 0 && (!grouped[key].arrivalTs || grouped[key].arrivalTs > ts))) {
           grouped[key].arrival = timeStr;
-          grouped[key].arrivalTs = ts || 0;
+          grouped[key].arrivalTs = ts;
         }
       } else {
-        if (!grouped[key].departure || (ts && (!grouped[key].departureTs || grouped[key].departureTs < ts))) {
+        if (!grouped[key].departure || (ts > 0 && (!grouped[key].departureTs || grouped[key].departureTs < ts))) {
           grouped[key].departure = timeStr;
-          grouped[key].departureTs = ts || 0;
+          grouped[key].departureTs = ts;
         }
       }
-      if (v.device) grouped[key].device = v.device;
     });
-    
+
     var rows = Object.keys(grouped).map(function (key) {
       return grouped[key];
     }).sort(function (a, b) {
@@ -122,27 +119,28 @@ window.JournalView = (function () {
       if (a.name !== b.name) return a.name.localeCompare(b.name);
       return 0;
     });
-    
+
     if (els.count) els.count.textContent = '(' + rows.length + ')';
 
     if (!rows.length) {
       els.body.innerHTML = '<tr><td colspan="6" class="empty-state">Нет записей по выбранным фильтрам</td></tr>';
       return;
     }
-    
+
     els.body.innerHTML = rows.map(function (row) {
       var img = row.photoUrl
-        ? '<img class="journal-photo" src="' + Utils.escapeHtml(row.photoUrl) + '" alt="" onerror="this.style.display=\'none\';var n=this.nextElementSibling;if(n)n.style.display=\'flex\'"><div class="journal-photo-placeholder" style="display:none">👤</div>'
+        ? '<img class="journal-photo" src="' + Utils.escapeHtml(row.photoUrl) + '" alt="" onerror="this.style.display=\'none\';var n=this.nextElementSibling;if(n)n.style.display=\'flex\'">' + '<div class="journal-photo-placeholder" style="display:none">👤</div>'
         : '<div class="journal-photo-placeholder">👤</div>';
       var meta = [row.department, row.position].filter(Boolean).join(' · ');
       var dateStr = row.date.split('-').reverse().join('.');
+      var hoursStr = Utils.calcWorkedHoursFromStrings(row.date, row.arrival, row.departure);
       return '<tr class="journal-row">' +
         '<td class="cell-photo" data-label="">' + img + '</td>' +
         '<td data-label="Сотрудник"><div class="cell-name">' + Utils.escapeHtml(row.name) + '</div>' + (meta ? '<div class="cell-meta">' + Utils.escapeHtml(meta) + '</div>' : '') + '</td>' +
         '<td data-label="Дата">' + Utils.escapeHtml(dateStr) + '</td>' +
         '<td class="cell-time" data-label="Время прихода">' + (row.arrival ? '<span class="journal-badge in">' + Utils.escapeHtml(row.arrival) + '</span>' : '<span style="color:var(--text-muted)">—</span>') + '</td>' +
         '<td class="cell-time" data-label="Время ухода">' + (row.departure ? '<span class="journal-badge out">' + Utils.escapeHtml(row.departure) + '</span>' : '<span style="color:var(--text-muted)">—</span>') + '</td>' +
-        '<td class="cell-meta" data-label="Устройство">' + Utils.escapeHtml(row.device) + '</td></tr>';
+        '<td class="cell-time" data-label="Часы">' + (hoursStr ? '<span class="journal-badge hours">' + Utils.escapeHtml(hoursStr) + '</span>' : '<span style="color:var(--text-muted)">—</span>') + '</td></tr>';
     }).join('');
   }
 
